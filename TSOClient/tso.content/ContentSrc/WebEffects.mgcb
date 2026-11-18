@@ -1,0 +1,98 @@
+
+#----------------------------- Global Properties ----------------------------#
+
+/outputDir:bin/$(Platform)
+/intermediateDir:obj/$(Platform)
+/platform:BlazorGL
+/config:
+/profile:HiDef
+/compress:False
+
+#-------------------------------- References --------------------------------#
+
+
+#---------------------------------- Content ---------------------------------#
+
+#begin Effects/2DWorldBatch.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:Defines=OPENGL=1;WEBGL=1
+/build:Effects/2DWorldBatch.fx
+
+#begin Effects/GrassShader.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:Defines=OPENGL=1;WEBGL=1
+/build:Effects/GrassShader.fx
+
+#begin Effects/LightMap2D.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:Defines=OPENGL=1;WEBGL=1
+/build:Effects/LightMap2D.fx
+
+#begin Effects/MSDFFont.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:Defines=OPENGL=1;WEBGL=1
+/build:Effects/MSDFFont.fx
+
+#begin Effects/MapGeneration.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:Defines=OPENGL=1;WEBGL=1
+/build:Effects/MapGeneration.fx
+
+#begin Effects/ParticleShader.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:Defines=OPENGL=1;WEBGL=1
+/build:Effects/ParticleShader.fx
+
+#begin Effects/PixShader.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:Defines=OPENGL=1;WEBGL=1
+/build:Effects/PixShader.fx
+
+#begin Effects/RCObject.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:Defines=OPENGL=1;WEBGL=1
+/build:Effects/RCObject.fx
+
+#begin Effects/SSAA.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:Defines=OPENGL=1;WEBGL=1
+/build:Effects/SSAA.fx
+
+#begin Effects/SpriteEffects.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:Defines=OPENGL=1;WEBGL=1
+/build:Effects/SpriteEffects.fx
+
+#begin Effects/VerShader.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:Defines=OPENGL=1;WEBGL=1
+/build:Effects/VerShader.fx
+
+#begin Effects/Vitaboy.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:Defines=OPENGL=1;WEBGL=1
+/build:Effects/Vitaboy.fx
+
+#begin Effects/colorpoly2D.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:Defines=OPENGL=1;WEBGL=1
+/build:Effects/colorpoly2D.fx
+
+#begin Effects/gradpoly2D.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:Defines=OPENGL=1;WEBGL=1
+/build:Effects/gradpoly2D.fx

@@ -142,7 +142,6 @@ namespace FSO.Common.Rendering.Framework
 
         private void TouchStub(UpdateState state)
         {
-            var test = TouchPanel.EnableMouseTouchPoint;
             TouchCollection touches = TouchPanel.GetState();
 			if (touches.Count != lastTouchCount) touchedFrames = 0;
 			lastTouchCount = touches.Count;

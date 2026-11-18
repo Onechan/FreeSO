@@ -1,0 +1,7 @@
+<Project>
+  <PropertyGroup Condition="'$(FreeSOWeb)' == 'true'">
+    <BaseIntermediateOutputPath>obj/web/</BaseIntermediateOutputPath>
+    <BaseOutputPath>bin/web/</BaseOutputPath>
+    <DefaultItemExcludes>$(DefaultItemExcludes);obj/**;bin/**</DefaultItemExcludes>
+  </PropertyGroup>
+</Project>

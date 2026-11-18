@@ -1,4 +1,10 @@
-﻿#include "LightingCommon.fx"
+#ifdef WEBGL
+#define SampleGradient(s, uv, dx, dy) tex2D(s, uv)
+#else
+#define SampleGradient(s, uv, dx, dy) tex2Dgrad(s, uv, dx, dy)
+#endif
+
+#include "LightingCommon.fx"
 
 float4x4 World;
 float4x4 ViewProjection;
@@ -158,7 +164,7 @@ float4 psWallRC(WallVertexOut v) : COLOR0
 #if SIMPLE
 	float4 color = gammaMul(v.color * tex2D(TexSampler, texC), lightInterp(mPos, v.texCoord.z)); // version for no mipmaps
 #else
-	float4 color = gammaMul(v.color * tex2Dgrad(AnisoSampler, texC, ddx(v.texCoord.xy), ddy(v.texCoord.xy)), lightInterp(mPos, v.texCoord.z));
+	float4 color = gammaMul(v.color * SampleGradient(AnisoSampler, texC, ddx(v.texCoord.xy), ddy(v.texCoord.xy)), lightInterp(mPos, v.texCoord.z));
 #endif
 	if (SideMask != 0) {
 		//our mask is actually a texture of a top right wall.

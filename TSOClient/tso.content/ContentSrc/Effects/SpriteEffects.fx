@@ -1,4 +1,10 @@
-﻿#if OPENGL
+#ifdef WEBGL
+#define SampleShadow(s, uv, dx, dy) tex2D(s, uv)
+#else
+#define SampleShadow(s, uv, dx, dy) tex2D(s, uv, dx, dy)
+#endif
+
+#if OPENGL
     #define SV_POSITION POSITION
     #define VS_SHADERMODEL vs_3_0
     #define PS_SHADERMODEL ps_3_0
@@ -192,7 +198,7 @@ sampler NoiseSampler : register(s1) = sampler_state {
 
 float4 OutdoorsPCFBlit(float4 position : SV_Position, float4 color : COLOR0, float2 uv : TEXCOORD0) : COLOR0
 {
-	float2 noiseOff = ((tex2D(NoiseSampler, uv*8, 0, 0).xy) - 0.5);
+	float2 noiseOff = ((SampleShadow(NoiseSampler, uv*8, 0, 0).xy) - 0.5);
 	//find the average shadow strength in the working region
 	//this determines how much we should blur the result by
 	//(unshadowed pixels are ignored in this calculation)
@@ -200,7 +206,7 @@ float4 OutdoorsPCFBlit(float4 position : SV_Position, float4 color : COLOR0, flo
 	float sumSamples = 0;
 	{
 		for (int i = 0; i < 36; i++) {
-			float shad = tex2D(TextureSampler, uv + Offsets[i]*blurAmount.x, 0, 0).x;
+			float shad = SampleShadow(TextureSampler, uv + Offsets[i]*blurAmount.x, 0, 0).x;
 			if (shad > 0) {
 				numSamples++;
 				sumSamples += shad;
@@ -227,9 +233,9 @@ float4 OutdoorsPCFBlit(float4 position : SV_Position, float4 color : COLOR0, flo
 	{
 		for (int i = 1; i < 36; i++) {
 #if OPENGL
-			float shad = tex2D(TextureSampler, bluruv + Offsets[i]*blurStrength, 0, 0).x;
+			float shad = SampleShadow(TextureSampler, bluruv + Offsets[i]*blurStrength, 0, 0).x;
 #else
-			float shad = tex2D(TextureSampler, uv + Offsets[i] * blurStrength, 0, 0).x;
+			float shad = SampleShadow(TextureSampler, uv + Offsets[i] * blurStrength, 0, 0).x;
 #endif
 			sum += GaussianKernel7[i] * ceil(shad);
 		}
@@ -239,7 +245,7 @@ float4 OutdoorsPCFBlit(float4 position : SV_Position, float4 color : COLOR0, flo
 	//odd samples: used only for high detail
 	if (highDetail == true) {
 		for (int i = 1; i < 37; i += 2) {
-			float shad = tex2D(TextureSampler, bluruv + Offsets[i] * blurStrength, 0, 0).x;
+			float shad = SampleShadow(TextureSampler, bluruv + Offsets[i] * blurStrength, 0, 0).x;
 			sum += GaussianKernel7[i] * ceil(shad);
 		}
 	}
@@ -266,8 +272,8 @@ float4 OutdoorsPCFStage1(float4 position : SV_Position, float4 color : COLOR0, f
 			float shad = tex2D(TextureSampler, uv + float2(blurAmount.x*i, 0)).x;
 			float shad2 = tex2D(TextureSampler, uv + float2(blurAmount.y*i, 0)).y;
 #else
-			float shad = tex2D(TextureSampler, uv + float2(blurAmount.x*i, 0), 0, 0).x;
-			float shad2 = tex2D(TextureSampler, uv + float2(blurAmount.y*i, 0), 0, 0).y;
+			float shad = SampleShadow(TextureSampler, uv + float2(blurAmount.x*i, 0), 0, 0).x;
+			float shad2 = SampleShadow(TextureSampler, uv + float2(blurAmount.y*i, 0), 0, 0).y;
 #endif
 			float effect = Gaussian23[i + 11] / 0.132384;
 			if (shad > 0) {
@@ -302,8 +308,8 @@ float4 OutdoorsPCFStage2(float4 position : SV_Position, float4 color : COLOR0, f
 			shad.xz = tex2D(TextureSampler, uv + float2(0, blurAmount.x*i)).xz;
 			shad.yw = tex2D(TextureSampler, uv + float2(0, blurAmount.y*i)).yw;
 #else
-			shad.xz = tex2D(TextureSampler, uv + float2(0, blurAmount.x*i), 0, 0).xz;
-			shad.yw = tex2D(TextureSampler, uv + float2(0, blurAmount.y*i), 0, 0).yw;
+			shad.xz = SampleShadow(TextureSampler, uv + float2(0, blurAmount.x*i), 0, 0).xz;
+			shad.yw = SampleShadow(TextureSampler, uv + float2(0, blurAmount.y*i), 0, 0).yw;
 #endif
 			shad.zw *= 23;
 			numSamples += shad.zw;
@@ -347,8 +353,8 @@ float4 OutdoorsPCFStage3(float4 position : SV_Position, float4 color : COLOR0, f
 			shad.x = tex2D(TextureSampler, bluruvx + float2(i*blurStrength.x, 0)).x;
 			shad.y = tex2D(TextureSampler, bluruvy + float2(i*blurStrength.y, 0)).y;
 #else
-			shad.x = tex2D(TextureSampler, bluruvx + float2(i*blurStrength.x, 0), 0, 0).x;
-			shad.y = tex2D(TextureSampler, bluruvy + float2(i*blurStrength.y, 0), 0, 0).y;
+			shad.x = SampleShadow(TextureSampler, bluruvx + float2(i*blurStrength.x, 0), 0, 0).x;
+			shad.y = SampleShadow(TextureSampler, bluruvy + float2(i*blurStrength.y, 0), 0, 0).y;
 #endif
 			sum += Gaussian23[i+11] * ceil(shad);
 		}
@@ -388,8 +394,8 @@ float4 OutdoorsPCFStage4(float4 position : SV_Position, float4 color : COLOR0, f
 			shad.x = tex2D(TextureSampler, bluruvx + float2(0, i*blurStrength.x)).x;
 			shad.y = tex2D(TextureSampler, bluruvy + float2(0, i*blurStrength.y)).y;
 #else
-			shad.x = tex2D(TextureSampler, bluruvx + float2(0, i*blurStrength.x), 0, 0).x;
-			shad.y = tex2D(TextureSampler, bluruvy + float2(0, i*blurStrength.y), 0, 0).y;
+			shad.x = SampleShadow(TextureSampler, bluruvx + float2(0, i*blurStrength.x), 0, 0).x;
+			shad.y = SampleShadow(TextureSampler, bluruvy + float2(0, i*blurStrength.y), 0, 0).y;
 #endif
 			sum += Gaussian23[i + 11] * (shad);
 		}

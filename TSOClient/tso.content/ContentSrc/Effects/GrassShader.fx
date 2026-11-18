@@ -1,3 +1,9 @@
+#ifdef WEBGL
+#define SampleGradient(s, uv, dx, dy) tex2D(s, uv)
+#else
+#define SampleGradient(s, uv, dx, dy) tex2Dgrad(s, uv, dx, dy)
+#endif
+
 #include "LightingCommon.fx"
 
 float4x4 Projection;
@@ -577,7 +583,7 @@ void RoofParallaxPS3D(GrassParallaxPSVTX input, out float4 color : COLOR0, out f
 
 	depthB = packDepth(d);
 	float2 texCoords = ParallaxMapping(input.GrassInfo.yz, viewDir);
-	color *= tex2Dgrad(TexSampler, texCoords, ddx(input.GrassInfo.yz), ddy(input.GrassInfo.yz));
+	color *= SampleGradient(TexSampler, texCoords, ddx(input.GrassInfo.yz), ddy(input.GrassInfo.yz));
 	if (color.a == 0) discard;
 
 	float3 normal = tex2D(NormalMapSampler, texCoords).xyz;
@@ -601,7 +607,7 @@ void FloorParallaxPS3D(GrassParallaxPSVTX input, out float4 color:COLOR0, out fl
 	}
 	else {
 		float2 texCoords = ParallaxMapping(LoopUV(input.GrassInfo.yz), viewDir);
-		color *= tex2Dgrad(TexSampler, texCoords, ddx(input.GrassInfo.yz), ddy(input.GrassInfo.yz));
+		color *= SampleGradient(TexSampler, texCoords, ddx(input.GrassInfo.yz), ddy(input.GrassInfo.yz));
 		if (color.a == 0) discard;
 
 		float3 normal = float3(0, 0, 1);
@@ -752,9 +758,9 @@ void BasePS3D(GrassPSVTX input, out float4 color:COLOR0)
 			color *= tex2D(TexSampler, LoopUV(input.GrassInfo.yz));
 #else
 #if SM4
-			color *= tex2Dgrad(AnisoTexSampler, LoopUV(input.GrassInfo.yz), ddx(input.GrassInfo.yz), ddy(input.GrassInfo.yz));
+			color *= SampleGradient(AnisoTexSampler, LoopUV(input.GrassInfo.yz), ddx(input.GrassInfo.yz), ddy(input.GrassInfo.yz));
 #else
-			color *= tex2Dgrad(TexSampler, LoopUV(input.GrassInfo.yz), ddx(input.GrassInfo.yz), ddy(input.GrassInfo.yz));
+			color *= SampleGradient(TexSampler, LoopUV(input.GrassInfo.yz), ddx(input.GrassInfo.yz), ddy(input.GrassInfo.yz));
 #endif
 #endif
 
