@@ -1,11 +1,11 @@
-<Project Condition="'$(FreeSOWeb)' == 'true'">
-  <PropertyGroup>
+<Project>
+  <PropertyGroup Condition="'$(FreeSOWeb)' == 'true'">
     <DefineConstants>$(DefineConstants);KNI;WEB</DefineConstants>
     <PublishAot>false</PublishAot>
     <PublishTrimmed>false</PublishTrimmed>
     <IsAotCompatible>false</IsAotCompatible>
   </PropertyGroup>
-  <ItemGroup Condition="@(PackageReference->AnyHaveMetadataValue('Identity', 'MonoGame.Framework.DesktopGL'))">
+  <ItemGroup Condition="'$(FreeSOWeb)' == 'true' and @(PackageReference->AnyHaveMetadataValue('Identity', 'MonoGame.Framework.DesktopGL'))">
     <PackageReference Remove="MonoGame.Framework.DesktopGL" />
     <PackageReference Include="nkast.Xna.Framework" Version="4.3.9001" />
     <PackageReference Include="nkast.Xna.Framework.Graphics" Version="4.3.9001" />
