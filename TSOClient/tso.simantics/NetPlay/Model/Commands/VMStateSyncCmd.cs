@@ -35,7 +35,7 @@ namespace FSO.SimAntics.NetPlay.Model.Commands
                     VM.UseWorld = true;
                     vm.FSOVClientJoin = (vm.Context.Architecture == null);
                     vm.LoadAsync(State);
-                    if (VM.UseWorld && vm.Context.Blueprint.SubWorlds.Count == 0) VMLotTerrainRestoreTools.RestoreSurroundings(vm, vm.HollowAdj);
+                    if (!vm.TS1 && VM.UseWorld && vm.Context.Blueprint.SubWorlds.Count == 0) VMLotTerrainRestoreTools.RestoreSurroundings(vm, vm.HollowAdj);
                     GameThread.InUpdate(() =>
                     {
                         vm.LoadComplete();
@@ -45,7 +45,7 @@ namespace FSO.SimAntics.NetPlay.Model.Commands
             else
             {
                 vm.Load(State);
-                if (VM.UseWorld && vm.Context.Blueprint.SubWorlds.Count == 0) VMLotTerrainRestoreTools.RestoreSurroundings(vm, vm.HollowAdj);
+                if (!vm.TS1 && VM.UseWorld && vm.Context.Blueprint.SubWorlds.Count == 0) VMLotTerrainRestoreTools.RestoreSurroundings(vm, vm.HollowAdj);
 
                 vm.SignalGenericVMEvt(VMEventType.Resync, null);
             }
