@@ -68,6 +68,75 @@ namespace FSO.SimAntics.Utils
             return list.FirstOrDefault((other) => other.IsMaster && other.MasterID == tile.MasterID);
         }
 
+        /// <summary>
+        /// TS1 saves the init and main tree versions of every object type in OBJT. When the installed object's trees have
+        /// a different version (for example a premade house saved by an older game build and opened with newer objects),
+        /// the original game resets objects of that type instead of resuming their saved stacks. Those stacks can point at
+        /// trees or nodes that no longer exist, which otherwise fails on the first instruction.
+        /// Sims keep their queued interactions: they are re-queued after the reset so the household continues its plans.
+        /// </summary>
+        private void ResetOutdatedObjects(OBJT objt)
+        {
+            var content = Content.Content.Get();
+            var outdated = new HashSet<uint>();
+            foreach (var entry in objt.Entries)
+            {
+                if (entry.GUID == 0) continue;
+                var obj = content.WorldObjects.Get(entry.GUID);
+                if (obj == null) continue;
+                if (TreeVersion(obj, 0) != entry.InitTreeVersion || TreeVersion(obj, 1) != entry.MainTreeVersion)
+                    outdated.Add(entry.GUID);
+            }
+
+            foreach (var ent in VM.Entities.ToList())
+            {
+                if (ent.Dead) continue;
+                if (ent is VMAvatar avatar)
+                {
+                    // Person trees live in the global and semi-global files, which OBJT does not version. A Sim resumed
+                    // from an older save can continue at a node of a changed tree (for example the Newbies on lot 7 take
+                    // the visitor branch and leave). Restart Sims on the lot from their main tree instead, and keep what
+                    // they were going to do by re-queuing their interactions from the current interaction tables.
+                    // Sims away from the lot (work, school) keep their saved state until they return.
+                    if (avatar.Position != LotTilePos.OUT_OF_WORLD) RestartKeepingQueue(avatar);
+                }
+                else if (outdated.Contains(ent.Object.OBJ.GUID)) ent.Reset(VM.Context);
+            }
+        }
+
+        private const int PersonDataFields = 101;
+
+        private void RestartKeepingQueue(VMAvatar avatar)
+        {
+            var saved = avatar.Thread.Queue.Where(x => x.Mode == Engine.VMQueueMode.Normal && x.Callee != null && !x.Callee.Dead).ToList();
+            avatar.Reset(VM.Context);
+            foreach (var action in saved)
+            {
+                // Rebuild from the callee's current interaction table so the action uses current trees.
+                var fresh = action.InteractionNumber >= 0
+                    ? action.Callee.GetAction(action.InteractionNumber, avatar, VM.Context, false, action.Args)
+                    : null;
+                if (fresh == null) continue;
+                fresh.Priority = action.Priority;
+                if (!string.IsNullOrEmpty(action.Name)) fresh.Name = action.Name;
+                avatar.Thread.EnqueueAction(fresh);
+            }
+        }
+
+        private ushort? TreeVersion(Content.GameObject obj, int entryPoint)
+        {
+            var functions = obj.OBJ.UsesFnTable == 0
+                ? new ushort[] { obj.OBJ.BHAV_Init, obj.OBJ.BHAV_MainID }
+                : obj.Resource.Get<OBJf>(obj.OBJ.ChunkID)?.functions?.Take(2).Select(x => x.ActionFunction).ToArray();
+            if (functions == null || entryPoint >= functions.Length || functions[entryPoint] == 0) return 0;
+            var id = functions[entryPoint];
+            object routine;
+            if (id >= 8192) routine = obj.Resource.SemiGlobal?.GetRoutine(id);
+            else if (id >= 4096) routine = obj.Resource.GetRoutine(id);
+            else routine = VM.Context.Globals.Resource.GetRoutine(id);
+            return (routine as VMRoutine)?.Chunk?.Version;
+        }
+
         private VMRoutine GetRoutine(VMStackFrameMarshal frame)
         {
             var content = Content.Content.Get();
@@ -375,7 +444,9 @@ namespace FSO.SimAntics.Utils
 
                 MotiveChanges = new VMMotiveChange[16],
                 MotiveDecay = new VMTS1MotiveDecay(),
-                PersonData = person.PersonData,
+                // Older saves store fewer person data fields (80 in the premade houses) than the engine uses (101).
+                // Newer objects read the later fields, so pad here instead of failing on first access.
+                PersonData = ArrayPad(person.PersonData, PersonDataFields),
                 MotiveData = person.MotiveData.Select(motive =>
                 {
                     return (short)Math.Round(motive);
@@ -684,6 +755,8 @@ namespace FSO.SimAntics.Utils
                     VM.Context.CreateObjectInstance(controller, LotTilePos.OUT_OF_WORLD, Direction.NORTH);
                 }
             }
+
+            ResetOutdatedObjects(objt);
 
             // Attempt to recover queue names.
             foreach (var ava in VM.Context.ObjectQueries.Avatars)
