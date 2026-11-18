@@ -856,6 +856,12 @@ namespace FSO.SimAntics
             return MotiveChanges[(int)motive].PerHourChange != 0;
         }
 
+        /// <summary>The value an active motive change stops at (for example the most energy a bed can restore).</summary>
+        public short GetMotiveChangeMax(VMMotive motive)
+        {
+            return MotiveChanges[(int)motive].MaxValue;
+        }
+
         public virtual void ClearMotiveChanges()
         {
             for (int i = 0; i < 16; i++)

@@ -76,17 +76,27 @@ namespace FSO.SimAntics.Entities
                     case 3:
                         frac = ToFixed1000(Constants[sleeping ? 13 : 12]) + FracMul(r_Hunger, ToFixed1000(Constants[4])); break;
                     case 4:
+                        var bedEnergy = avatar.HasMotiveChange(VMMotive.Energy);
                         //try to wake the sim up if they're asleep on the wake hour, and they're well rested.
                         if (sleeping && hours == Constants[2] && motive >= Constants[0] - 100)
+                        {
+                            avatar.SetMotiveData(VMMotive.SleepState, 0);
+                        }
+                        // Also wake once the bed cannot restore any more energy. Without this a Sim who went to bed
+                        // after 7:00 slept until 7:00 the next day, missing work, because only the wake hour ended sleep.
+                        else if (sleeping && bedEnergy && motive >= avatar.GetMotiveChangeMax(VMMotive.Energy))
                         {
                             avatar.SetMotiveData(VMMotive.SleepState, 0);
                         }
 
                         if (sleeping)
                         {
-                            if (avatar.GetMotiveData(VMMotive.SleepState) == -1)
+                            // Asleep without a bed restoring energy (passing out on the floor sets sleep state -50 in the
+                            // current objects): recover at the sleep rate. Previously only state -1 recovered, so a Sim
+                            // who passed out stayed at -100 energy and never woke up.
+                            if (avatar.GetMotiveData(VMMotive.SleepState) == -1 || !bedEnergy)
                             {
-                                frac = -643 * 2; 
+                                frac = -643 * 2;
                             }
                             else
                             {
