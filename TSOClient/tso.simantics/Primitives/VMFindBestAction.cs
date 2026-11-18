@@ -89,6 +89,19 @@ namespace FSO.SimAntics.Primitives
 
         public static int[] MotiveToWeight = Enumerable.Range(0, 16).Select(motive => Array.IndexOf(WeightMotives, (VMMotive)motive)).ToArray();
 
+        /// <summary>
+        /// Diagnostics hook: receives the Sim, every scored candidate (best first) and the chosen candidate,
+        /// or null when nothing qualified.
+        /// </summary>
+        public static Action<VMAvatar, List<VMPieMenuInteraction>, VMPieMenuInteraction> OnDecision;
+
+        /// <summary>
+        /// Sims 1 does not let a Sim pick the same autonomous interaction on the same object again for a while.
+        /// Without it Sims repeat a pick that changes nothing, such as turning a stereo on and off or mourning all day,
+        /// and starve while doing it. Two game hours (30 ticks per minute); the original duration is not documented.
+        /// </summary>
+        public static uint TS1LockoutTicks = 30 * 60 * 2;
+
         public override VMPrimitiveExitCode Execute(VMStackFrame context, VMPrimitiveOperand args)
         {
             //if we already have some action, do nothing
@@ -111,6 +124,7 @@ namespace FSO.SimAntics.Primitives
             }
 
             var ents = new List<VMEntity>(context.VM.Context.ObjectQueries.WithAutonomy);
+            var now = context.VM.Scheduler.CurrentTickID;
             var processed = new HashSet<short>();
             var pos1 = caller.Position;
 
@@ -165,6 +179,7 @@ namespace FSO.SimAntics.Primitives
                 foreach (var entry in obj.TreeTable.AutoInteractions)
                 {
                     var id = entry.TTAIndex;
+                    if (context.VM.TS1 && caller.IsAutonomyLockedOut(obj.ObjectID, id, now)) continue;
                     if (inUse && !obj.TreeTable.Interactions.Any(x => x.JoiningIndex == id)) continue;
                     var advertisements = entry.ActiveMotiveEntries; //TODO: cache this
                     if (advertisements.Length == 0) continue; //no ads on this object.
@@ -218,9 +233,12 @@ namespace FSO.SimAntics.Primitives
                             short personality = (short)motiveScore.PersonalityModifier;
                             if (first.MotiveAdChanges != null)
                             {
-                                first.MotiveAdChanges.TryGetValue((0 << 16) | motiveI, out min);
-                                first.MotiveAdChanges.TryGetValue((1 << 16) | motiveI, out max);
-                                first.MotiveAdChanges.TryGetValue((2 << 16) | motiveI, out personality);
+                                // A check tree can change one part of an ad (often only the range). Keep the TTAB value
+                                // for the parts it left alone; TryGetValue used to overwrite them with 0.
+                                if (first.MotiveAdChanges.TryGetValue(motiveI, out var minOverride)) min = minOverride;
+                                if (first.MotiveAdChanges.TryGetValue((1 << 16) | motiveI, out var maxOverride)) max = maxOverride;
+                                if (first.MotiveAdChanges.TryGetValue((2 << 16) | motiveI, out var personalityOverride))
+                                    personality = personalityOverride;
                             }
 
                             if (max == 0 && min > 0)
@@ -270,24 +288,27 @@ namespace FSO.SimAntics.Primitives
 
                         if (score > minScore)
                         {
-                            foreach (var item in pie)
-                            {
-                                item.Score = score;
-                                item.Callee = obj;
-                                validActions.Add(first);
-                            }
+                            // The score comes from the first pie entry. Add it once, so an interaction with several
+                            // sub-entries does not fill the top four with copies of itself.
+                            first.Score = score;
+                            first.Callee = obj;
+                            validActions.Add(first);
                         }
                     }
                     //if (attenScore != 0) attenScore += (int)context.VM.Context.NextRandom(31) - 15;
                     
-                    //TODO: Lockout interactions that have been used before for a few sim hours (in ts1 ticks. same # of ticks for tso probably)
                     //TODO: special logic for socials?
                 }
             }
             List<VMPieMenuInteraction> sorted = validActions.OrderByDescending(x => x.Score).ToList();
+            var ranked = OnDecision == null ? null : sorted;
             sorted = TakeTopActions(sorted, 4);
             var selection = sorted.FirstOrDefault();
-            if (selection == null) return VMPrimitiveExitCode.GOTO_FALSE;
+            if (selection == null)
+            {
+                OnDecision?.Invoke(caller, ranked, null);
+                return VMPrimitiveExitCode.GOTO_FALSE;
+            }
             if (!selection.Entry.AutoFirst)
             {
                 // weighted random selection
@@ -308,9 +329,11 @@ namespace FSO.SimAntics.Primitives
                 }
             }
 
+            OnDecision?.Invoke(caller, ranked, selection);
             var qaction = selection.Callee.GetAction(selection.ID, context.Caller, context.VM.Context, false, new short[] { selection.Param0, 0, 0, 0 });
             if (qaction != null)
             {
+                if (context.VM.TS1) caller.LockOutAutonomy(selection.Callee.ObjectID, selection.ID, now, now + TS1LockoutTicks);
                 qaction.Priority = (short)VMQueuePriority.Autonomous;
                 context.Caller.Thread.EnqueueAction(qaction);
                 context.StackObject = selection.Callee;

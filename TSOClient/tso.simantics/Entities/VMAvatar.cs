@@ -857,6 +857,26 @@ namespace FSO.SimAntics
         }
 
         /// <summary>The value an active motive change stops at (for example the most energy a bed can restore).</summary>
+        /// <summary>
+        /// Autonomous interactions this Sim recently picked, by object and interaction, with the tick they unlock.
+        /// Runtime only: a reload clears it, which matches a Sims 1 lot load.
+        /// </summary>
+        private Dictionary<(short Object, uint Interaction), uint> AutonomyLockouts;
+
+        public bool IsAutonomyLockedOut(short objectID, uint interaction, uint now) =>
+            AutonomyLockouts != null && AutonomyLockouts.TryGetValue((objectID, interaction), out var until) && until > now;
+
+        public void LockOutAutonomy(short objectID, uint interaction, uint now, uint until)
+        {
+            AutonomyLockouts ??= new Dictionary<(short, uint), uint>();
+            if (AutonomyLockouts.Count > 64)
+            {
+                foreach (var key in AutonomyLockouts.Where(x => x.Value <= now).Select(x => x.Key).ToList())
+                    AutonomyLockouts.Remove(key);
+            }
+            AutonomyLockouts[(objectID, interaction)] = until;
+        }
+
         public short GetMotiveChangeMax(VMMotive motive)
         {
             return MotiveChanges[(int)motive].MaxValue;
