@@ -113,10 +113,11 @@ namespace FSO.HIT
                 {
                     var note = Notes[i];
                     var inst = note.instance;
+                    if (inst.IsDisposed) continue;
                     if (note.EndTick != -1 && TickN > note.EndTick) inst.Stop();
-                    if (!note.started && inst.State == SoundState.Stopped)
+                    if (inst.State == SoundState.Stopped)
                     {
-                        if (!inst.IsDisposed) inst.Dispose();
+                        if (!note.started) inst.Dispose();
                         continue;
                     }
                     if (Emitter3D == null) inst.Pan = Pan;
