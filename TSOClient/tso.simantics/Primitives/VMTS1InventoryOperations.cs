@@ -59,8 +59,9 @@ namespace FSO.SimAntics.Primitives
 
             var neighbourhood = Content.Content.Get().Neighborhood;
             var inTarget = (operand.UseObjectInTemp4) ? context.VM.GetObjectById(context.Thread.TempRegisters[4]) : context.Caller;
-            if (inTarget is VMGameObject) { }
-            var target = (VMAvatar)(inTarget);
+            // Inventories belong to Sims. A missing or non-Sim target (seen from Makin' Magic's Tragic Clown Generator
+            // in "Magic Growth - Qualify?") fails the primitive instead of throwing and resetting the object.
+            if (inTarget is not VMAvatar target) return VMPrimitiveExitCode.GOTO_FALSE;
             var neighbour = target.GetPersonData(Model.VMPersonDataVariable.NeighborId);
             var inventory = neighbourhood.GetInventoryByNID(neighbour);
             var count = (operand.CountInTemp) ? context.Thread.TempRegisters[0] : 1;
