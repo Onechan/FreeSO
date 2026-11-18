@@ -17,9 +17,12 @@ namespace FSO.LotView
 
         public static void Init(GameServiceContainer serviceContainer, string rootDir)
         {
-            ContentManager = new ContentManager(serviceContainer);
-            ContentManager.RootDirectory = rootDir;
+            Init(new ContentManager(serviceContainer) { RootDirectory = rootDir });
+        }
 
+        public static void Init(ContentManager contentManager)
+        {
+            ContentManager = contentManager;
             LoadEffects(false);
         }
 
