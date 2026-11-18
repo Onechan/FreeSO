@@ -388,7 +388,8 @@ namespace FSO.HIT
         public bool NoteActive(int note)
         {
             if (note == -1 || note >= Notes.Count) return false;
-            return !Notes[note].started || (Notes[note].instance.State != SoundState.Stopped);
+            var entry = Notes[note];
+            return !entry.instance.IsDisposed && (!entry.started || entry.instance.State != SoundState.Stopped);
         }
 
         /// <summary>
@@ -499,7 +500,8 @@ namespace FSO.HIT
             Paused = true;
             foreach (var note in Notes)
             {
-                if (note.instance.State != SoundState.Stopped) note.instance.Pause();
+                if (note.started && !note.instance.IsDisposed && note.instance.State == SoundState.Playing)
+                    note.instance.Pause();
             }
         }
 
@@ -508,7 +510,8 @@ namespace FSO.HIT
             Paused = false;
             foreach (var note in Notes)
             {
-                if (note.instance.State != SoundState.Stopped) note.instance.Resume();
+                if (note.started && !note.instance.IsDisposed && note.instance.State == SoundState.Paused)
+                    note.instance.Resume();
             }
         }
     }

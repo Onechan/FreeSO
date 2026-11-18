@@ -120,6 +120,7 @@ namespace FSO.HIT
 
             foreach (var item in PlayQueue)
             {
+                if (item.instance.IsDisposed) continue;
                 item.started = true;
                 item.instance.Play();
             }
