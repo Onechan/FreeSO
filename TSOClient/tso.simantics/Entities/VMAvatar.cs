@@ -1321,10 +1321,11 @@ namespace FSO.SimAntics
 
         public virtual void LoadCrossRef(VMAvatarMarshal input, VMContext context)
         {
-            if (input.Contained.Length == 0)
+            var savedSlots = input.Contained.Length;
+            if (savedSlots < TotalSlots())
             {
-                input.Contained = new short[3];
-                input.Contained[0] = input.HandObjectOld;
+                Array.Resize(ref input.Contained, TotalSlots());
+                if (savedSlots == 0) input.Contained[0] = input.HandObjectOld;
             }
             base.LoadCrossRef(input, context);
             foreach (var obj in Contained)
