@@ -16,83 +16,83 @@
 #begin Effects/2DWorldBatch.fx
 /importer:EffectImporter
 /processor:EffectProcessor
-/processorParam:Defines=OPENGL=1;WEBGL=1
+/processorParam:Defines=OPENGL;WEBGL
 /build:Effects/2DWorldBatch.fx
 
 #begin Effects/GrassShader.fx
 /importer:EffectImporter
 /processor:EffectProcessor
-/processorParam:Defines=OPENGL=1;WEBGL=1
+/processorParam:Defines=OPENGL;WEBGL
 /build:Effects/GrassShader.fx
 
 #begin Effects/LightMap2D.fx
 /importer:EffectImporter
 /processor:EffectProcessor
-/processorParam:Defines=OPENGL=1;WEBGL=1
+/processorParam:Defines=OPENGL;WEBGL
 /build:Effects/LightMap2D.fx
 
 #begin Effects/MSDFFont.fx
 /importer:EffectImporter
 /processor:EffectProcessor
-/processorParam:Defines=OPENGL=1;WEBGL=1
+/processorParam:Defines=OPENGL;WEBGL
 /build:Effects/MSDFFont.fx
 
 #begin Effects/MapGeneration.fx
 /importer:EffectImporter
 /processor:EffectProcessor
-/processorParam:Defines=OPENGL=1;WEBGL=1
+/processorParam:Defines=OPENGL;WEBGL
 /build:Effects/MapGeneration.fx
 
 #begin Effects/ParticleShader.fx
 /importer:EffectImporter
 /processor:EffectProcessor
-/processorParam:Defines=OPENGL=1;WEBGL=1
+/processorParam:Defines=OPENGL;WEBGL
 /build:Effects/ParticleShader.fx
 
 #begin Effects/PixShader.fx
 /importer:EffectImporter
 /processor:EffectProcessor
-/processorParam:Defines=OPENGL=1;WEBGL=1
+/processorParam:Defines=OPENGL;WEBGL
 /build:Effects/PixShader.fx
 
 #begin Effects/RCObject.fx
 /importer:EffectImporter
 /processor:EffectProcessor
-/processorParam:Defines=OPENGL=1;WEBGL=1
+/processorParam:Defines=OPENGL;WEBGL
 /build:Effects/RCObject.fx
 
 #begin Effects/SSAA.fx
 /importer:EffectImporter
 /processor:EffectProcessor
-/processorParam:Defines=OPENGL=1;WEBGL=1
+/processorParam:Defines=OPENGL;WEBGL
 /build:Effects/SSAA.fx
 
 #begin Effects/SpriteEffects.fx
 /importer:EffectImporter
 /processor:EffectProcessor
-/processorParam:Defines=OPENGL=1;WEBGL=1
+/processorParam:Defines=OPENGL;WEBGL
 /build:Effects/SpriteEffects.fx
 
 #begin Effects/VerShader.fx
 /importer:EffectImporter
 /processor:EffectProcessor
-/processorParam:Defines=OPENGL=1;WEBGL=1
+/processorParam:Defines=OPENGL;WEBGL
 /build:Effects/VerShader.fx
 
 #begin Effects/Vitaboy.fx
 /importer:EffectImporter
 /processor:EffectProcessor
-/processorParam:Defines=OPENGL=1;WEBGL=1
+/processorParam:Defines=OPENGL;WEBGL
 /build:Effects/Vitaboy.fx
 
 #begin Effects/colorpoly2D.fx
 /importer:EffectImporter
 /processor:EffectProcessor
-/processorParam:Defines=OPENGL=1;WEBGL=1
+/processorParam:Defines=OPENGL;WEBGL
 /build:Effects/colorpoly2D.fx
 
 #begin Effects/gradpoly2D.fx
 /importer:EffectImporter
 /processor:EffectProcessor
-/processorParam:Defines=OPENGL=1;WEBGL=1
+/processorParam:Defines=OPENGL;WEBGL
 /build:Effects/gradpoly2D.fx
