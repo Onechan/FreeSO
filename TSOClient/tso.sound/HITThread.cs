@@ -92,7 +92,7 @@ namespace FSO.HIT
         public override void Dispose()
         {
             InterruptWaiter?.Unblock();
-            foreach (var note in Notes) note.instance.Dispose();
+            foreach (var note in Notes) StopNote(note);
         }
 
         public override bool Tick() //true if continue, false if kill
@@ -114,12 +114,12 @@ namespace FSO.HIT
                     var note = Notes[i];
                     var inst = note.instance;
                     if (inst.IsDisposed) continue;
-                    if (note.EndTick != -1 && TickN > note.EndTick) inst.Stop();
-                    if (inst.State == SoundState.Stopped)
+                    if (note.EndTick != -1 && TickN > note.EndTick)
                     {
-                        if (!note.started) inst.Dispose();
+                        StopNote(note);
                         continue;
                     }
+                    if (!note.started || inst.State == SoundState.Stopped) continue;
                     if (Emitter3D == null) inst.Pan = Pan;
                     else Apply3D(inst);
                     inst.Volume = Math.Min(1.0f, Volume);
@@ -183,14 +183,16 @@ namespace FSO.HIT
         /// </summary>
         public void KillVocals()
         {
-            for (int i = 0; i < Notes.Count; i++)
-            {
-                if (NoteActive(i))
-                {
-                    Notes[i].instance.Stop();
-                    Notes[i].instance.Dispose();
-                }
-            }
+            foreach (var note in Notes) StopNote(note);
+        }
+
+        private static void StopNote(HITNoteEntry note)
+        {
+            var instance = note.instance;
+            if (instance.IsDisposed) return;
+            // A queued or paused WebAudio note does not have a source node to stop.
+            if (note.started && instance.State == SoundState.Playing) instance.Stop();
+            instance.Dispose();
         }
 
         public HITThread(HITResourceGroup Src, HITVM VM)
