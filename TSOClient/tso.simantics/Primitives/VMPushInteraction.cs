@@ -16,6 +16,9 @@ namespace FSO.SimAntics.Engine.Primitives
 
             if (operand.ObjectInLocal) interactionSource = context.VM.GetObjectById((short)context.Locals[operand.ObjectLocation]);
             else interactionSource = context.VM.GetObjectById((short)context.Args[operand.ObjectLocation]);
+            // The source or the target can be gone by the time a script pushes (a Sims 1 ghost scaring a Sim who just
+            // left the lot). Fail the push instead of throwing and resetting the caller.
+            if (interactionSource == null || context.StackObject == null) return VMPrimitiveExitCode.GOTO_FALSE;
 
             short priority = 0;
             VMQueueMode mode = VMQueueMode.Normal;

@@ -133,6 +133,9 @@ namespace FSO.SimAntics.Primitives
                         break;
                 }
                 if (entities == null) return VMPrimitiveExitCode.GOTO_FALSE;
+                // A family member search continues from a Sim. Makin' Magic's Tragic Clown Generator starts from the
+                // selected Sim (global 3), which can be 0 or a stale id; without a Sim there is no family to walk.
+                if (operand.SearchType == VMSetToNextSearchType.FamilyMember && Pointer is not VMAvatar) return VMPrimitiveExitCode.GOTO_FALSE;
 
                 bool loop = (operand.SearchType == VMSetToNextSearchType.ObjectOnSameTile) || (operand.SearchType == VMSetToNextSearchType.FamilyMember);
 

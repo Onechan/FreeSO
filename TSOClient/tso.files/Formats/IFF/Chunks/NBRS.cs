@@ -65,9 +65,12 @@ namespace FSO.Files.Formats.IFF.Chunks
                 io.WriteUInt32(0x49);
                 io.WriteCString("SRBN", 4);
                 io.WriteInt32(Entries.Count);
-                foreach (var n in NeighbourByID.Values)
+                foreach (var n in Entries)
                 {
-                    n.Save(io);
+                    // Empty slots (deleted neighbours) are a single field in the original format. Writing only the
+                    // real neighbours after the full count left the file shorter than its header said.
+                    if (n.Unknown1 != 1) io.WriteInt32(n.Unknown1);
+                    else n.Save(io);
                 }
             }
             return true;

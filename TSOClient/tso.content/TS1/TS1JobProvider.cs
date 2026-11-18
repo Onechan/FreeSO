@@ -1,4 +1,5 @@
-﻿using FSO.Content.Framework;
+﻿using System;
+using FSO.Content.Framework;
 using FSO.Files.Formats.IFF;
 using FSO.Files.Formats.IFF.Chunks;
 using System.Linq;
@@ -47,7 +48,10 @@ namespace FSO.Content.TS1
         public JobLevel GetJobLevel(short jobID, int jobLevel)
         {
             var job = JobResource.Get<CARR>((ushort)jobID);
-            return job?.JobLevels[jobLevel];
+            if (job == null || job.JobLevels.Length == 0) return null;
+            // Scripts can ask for a level past the career's last one (a child sent to military school in Sims 1);
+            // use the nearest level instead of throwing.
+            return job.JobLevels[Math.Clamp(jobLevel, 0, job.JobLevels.Length - 1)];
         }
     }
 }
