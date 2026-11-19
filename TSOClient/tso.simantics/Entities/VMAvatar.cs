@@ -1028,6 +1028,10 @@ namespace FSO.SimAntics
             SetPersonData(VMPersonDataVariable.VisitorSchedule, sched);
             SetPersonData(VMPersonDataVariable.GreetStatus, 0);
             SetPersonData(VMPersonDataVariable.IsGhost, GetPersonData(VMPersonDataVariable.IsGhost));
+            // The stored priority is that of the interaction the Sim ran when the neighbour was saved, such as "Go Home"
+            // (100) at a lot switch. A new Sim runs nothing yet. With the old value no queued interaction could start,
+            // and idle for input never let the main loop wait: the thread looped after a trip home.
+            SetPersonData(VMPersonDataVariable.Priority, 0);
         }
 
         public virtual short GetMotiveData(VMMotive variable) //needs special conditions for ones like Mood.

@@ -10,6 +10,7 @@ using FSO.Content;
 using FSO.Files.Formats.IFF.Chunks;
 using FSO.SimAntics.Primitives;
 using FSO.SimAntics.Model;
+using FSO.LotView.Model;
 using FSO.SimAntics.Marshals.Threads;
 using FSO.SimAntics.Model.TSOPlatform;
 using FSO.SimAntics.NetPlay.EODs.Model;
@@ -23,6 +24,12 @@ namespace FSO.SimAntics.Engine
     public class VMThread
     {
         public static int MAX_USER_ACTIONS = 20;
+
+        /// <summary>
+        /// The object a same-tile search started from, and the last object it returned. Not saved: after loading, the next
+        /// search simply starts again from its current object.
+        /// </summary>
+        public VMEntity SameTileStart, SameTileLast;
 
         public VMContext Context;
         private VMEntity Entity;
@@ -203,6 +210,27 @@ namespace FSO.SimAntics.Engine
         /// Checks to see if it can push an interaction, and pushes it.
         /// Returns true on success, false on failure.
         /// </summary>
+        /// <summary>
+        /// What the Sim was doing when its thread looped: its tile and container, and the queued interactions. The engine
+        /// resets the Sim afterwards, so this is the only trace of the state that caused the loop.
+        /// </summary>
+        private string LoopReport()
+        {
+            try
+            {
+                var tile = Entity.Position == LotTilePos.OUT_OF_WORLD ? null : Context.ObjectQueries.GetObjectsAt(Entity.Position);
+                var queue = string.Join("; ", Queue.Select((item, i) =>
+                    $"{(i <= ActiveQueueBlock ? "*" : "")}{item.Name ?? "?"} prio {item.Priority} mode {item.Mode} callee {item.Callee?.ToString() ?? "-"} " +
+                    $"routine {item.ActionRoutine?.Rti?.Name ?? "-"}/{item.ActionRoutine?.Instructions?.Length ?? 0}"));
+                return $" [at {Entity.Position} in {Entity.Container?.ToString() ?? "-"}; tile has {(tile == null ? "nothing" : tile.Count + (tile.Contains(Entity) ? " incl. itself" : " not itself"))}; " +
+                    $"priority {(Entity as VMAvatar)?.GetPersonData(VMPersonDataVariable.Priority)}; queue {Queue.Count} block {ActiveQueueBlock}: {queue}]";
+            }
+            catch (Exception e)
+            {
+                return " [no report: " + e.Message + "]";
+            }
+        }
+
         public bool AttemptPush()
         {
             int priorityCompare = ((VMAvatar)Entity).GetPersonData(VMPersonDataVariable.Priority);
@@ -216,7 +244,14 @@ namespace FSO.SimAntics.Engine
                 if (IsCheck || ((item.Mode != VMQueueMode.ParentIdle || !Entity.GetFlag(VMEntityFlags.InteractionCanceled)) && CheckAction(item) != null))
                 {
                     Entity.SetFlag(VMEntityFlags.InteractionCanceled, false);
-                    if (!ExecuteAction(item)) return false;
+                    if (!ExecuteAction(item))
+                    {
+                        // An interaction that cannot start (an empty routine) stayed queued for ever. Idle for input
+                        // then saw a waiting interaction every time and never let the main loop wait: drop it.
+                        ((VMAvatar)Entity).SetPersonData(VMPersonDataVariable.Priority, 0);
+                        Queue.RemoveAt(ActiveQueueBlock + 1);
+                        continue;
+                    }
                     ActiveQueueBlock++;
                     return true;
                 }
@@ -351,7 +386,7 @@ namespace FSO.SimAntics.Engine
                             if (TicksThisFrame++ > MAX_LOOP_COUNT)
                             {
                                 TicksThisFrame = 0;
-                                throw new Exception("Thread entered infinite loop! ( >" + MAX_LOOP_COUNT + " primitives)");
+                                throw new Exception("Thread entered infinite loop! ( >" + MAX_LOOP_COUNT + " primitives)" + LoopReport());
                             }
                             ContinueExecution = false;
                             NextInstruction();

@@ -140,9 +140,12 @@ namespace FSO.SimAntics.Primitives
                 // selected Sim (global 3), which can be 0 or a stale id; without a Sim there is no family to walk.
                 if (operand.SearchType == VMSetToNextSearchType.FamilyMember && Pointer is not VMAvatar) return VMPrimitiveExitCode.GOTO_FALSE;
 
-                // Same-tile searches wrap around until they come back to the object they started from. If that object
-                // is missing from the tile's list (a Sim just placed back on the lot), wrapping never ends: search once.
-                bool loop = (operand.SearchType == VMSetToNextSearchType.ObjectOnSameTile && Pointer != null && entities.Contains(Pointer))
+                // Same-tile searches wrap around until they come back to the object they started from ("move away from
+                // door" starts from the Sim itself). If that object is missing from the tile's list, wrapping never ends
+                // and the thread loops: then search the list once. The thread remembers where the search started.
+                var sameTile = operand.SearchType == VMSetToNextSearchType.ObjectOnSameTile;
+                if (sameTile && context.Thread.SameTileLast != Pointer) context.Thread.SameTileStart = Pointer;
+                bool loop = (sameTile && Pointer != null && entities.Contains(Pointer) && entities.Contains(context.Thread.SameTileStart))
                     || (operand.SearchType == VMSetToNextSearchType.FamilyMember);
 
                 var ind = entities.FindNextIndexInObjList(targetValue);
@@ -179,6 +182,7 @@ namespace FSO.SimAntics.Primitives
                     }
                     if (found)
                     {
+                        if (sameTile) context.Thread.SameTileLast = temp == context.Thread.SameTileStart ? null : temp; // back at the start: done
                         SetVariable(context, operand, temp);
                         return VMPrimitiveExitCode.GOTO_TRUE;
                     }
@@ -202,6 +206,7 @@ namespace FSO.SimAntics.Primitives
                     if (first == null || !entities.Contains(Pointer)) return VMPrimitiveExitCode.GOTO_FALSE; //no elements of this kind at all.
                     else
                     {
+                        if (sameTile) context.Thread.SameTileLast = first == context.Thread.SameTileStart ? null : first;
                         SetVariable(context, operand, first);
                         return VMPrimitiveExitCode.GOTO_TRUE;
                     }
@@ -209,6 +214,7 @@ namespace FSO.SimAntics.Primitives
                 }
 
             }
+            if (operand.SearchType == VMSetToNextSearchType.ObjectOnSameTile) context.Thread.SameTileLast = null;
             return VMPrimitiveExitCode.GOTO_FALSE; //ran out of objects to test
         }
 
