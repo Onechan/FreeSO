@@ -105,16 +105,14 @@ namespace FSO.SimAntics.Primitives
                     var people = new List<VMAvatar>();
 
                     people.Add((VMAvatar)context.Caller);
-                    if (crossData.LotTransitInfo >= 1)
+                    foreach (VMAvatar person in context.VM.Context.ObjectQueries.Avatars)
                     {
-                        foreach (VMAvatar person in context.VM.Context.ObjectQueries.Avatars)
-                        {
-                            // A family member at work or school stays behind. (The others may already be out of the
-                            // world, boarding the shuttle, so position does not tell.)
-                            if (person.GetPersonData(VMPersonDataVariable.TS1FamilyNumber) == crossData.ActiveFamily.ChunkID && person != context.Caller
-                                && person.GetPersonData(VMPersonDataVariable.TS1AtWorkSchool) == 0)
-                                people.Add(person);
-                        }
+                        if (person.GetPersonData(VMPersonDataVariable.TS1FamilyNumber) != crossData.ActiveFamily.ChunkID || person == context.Caller) continue;
+                        // A family member at work or school stays behind. On a whole-family trip everyone else goes;
+                        // on a single trip, so do the members already in the vehicle as followers (the Old Town wagon
+                        // takes the family along: "Follower Get In Wagon"). Off the lot and not at work means that.
+                        if (person.GetPersonData(VMPersonDataVariable.TS1AtWorkSchool) != 0) continue;
+                        if (crossData.LotTransitInfo >= 1 || person.Position == LotTilePos.OUT_OF_WORLD) people.Add(person);
                     }
                     crossData.Travellers = people.Select(person => person.Object.OBJ.GUID).ToArray();
 
@@ -159,8 +157,18 @@ namespace FSO.SimAntics.Primitives
                     ((VMAvatar)control).AvatarState.Permissions = Model.TSOPlatform.VMTSOAvatarPermissions.Owner;
                     context.VM.SetGlobalValue(3, control.ObjectID);
                     context.VM.SendCommand(new VMNetChangeControlCmd() { TargetID = control.ObjectID });
-                    crossDataDT.ActiveFamily.SelectOneMember(crossDataDT.DowntownSimGUID);
+                    // Family members who came along as followers arrive with the traveller, next to this marker.
+                    var followers = crossDataDT.Travellers.Where(guid => guid != crossDataDT.DowntownSimGUID && crossDataDT.ActiveFamily.FamilyGUIDs.Contains(guid)).ToArray();
+                    crossDataDT.ActiveFamily.RuntimeSubset = new[] { crossDataDT.DowntownSimGUID }.Concat(followers).ToArray();
                     context.VM.TS1State.ActivateFamily(context.VM, crossDataDT.ActiveFamily);
+                    foreach (var guid in followers)
+                    {
+                        if (context.VM.Context.ObjectQueries.GetObjectsByGUID(guid)?.Count > 0) continue;
+                        if (context.VM.Context.CreateObjectInstance(guid, LotTilePos.OUT_OF_WORLD, Direction.NORTH)?.BaseObject is not VMAvatar follower) continue;
+                        follower.SetPersonData(VMPersonDataVariable.TS1FamilyNumber, (short)crossDataDT.ActiveFamily.ChunkID);
+                        follower.AvatarState.Permissions = Model.TSOPlatform.VMTSOAvatarPermissions.Owner;
+                        VMFindLocationFor.FindLocationFor(follower, context.Caller, context.VM.Context, VMPlaceRequestFlags.Default);
+                    }
 
                     context.Thread.TempRegisters[0] = context.VM.GetGlobalValue(3);
                     if (VM.UseWorld) context.VM.Context.World.CenterTo((AvatarComponent)(context.VM.GetObjectById(context.VM.GetGlobalValue(3))?.WorldUI));
