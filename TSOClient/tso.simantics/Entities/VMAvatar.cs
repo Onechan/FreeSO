@@ -425,6 +425,12 @@ namespace FSO.SimAntics
 
         public override void Reset(VMContext context)
         {
+            // A reset can cut a chair's stand function off after it took the Sim out of the seat but before posture
+            // went back to standing (the engine resets a Sim when the owner of her interaction is deleted, like a
+            // ghost after a scare). Sims 1 idle code then reads the missing seat. Stand up, like the routing frame
+            // does for a Sim that sits without a seat.
+            if (Container == null && GetPersonData(VMPersonDataVariable.Posture) == 1)
+                SetPersonData(VMPersonDataVariable.Posture, 0);
             base.Reset(context);
             SetPersonData(VMPersonDataVariable.Priority, 0);
             if (Animations != null) Animations.Clear();
