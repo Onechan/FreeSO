@@ -817,11 +817,13 @@ namespace FSO.SimAntics.Engine
                         {
                             // queue skip all items with a lower priority (after this interaction)
                             // i've verified this happens in ts1, but I don't know if it does in TSO so i've locked it for now.
-                            i += 2;
-                            while (i < this.Queue.Count)
-                            {
-                                CancelAction(this.Queue[i].UID);
-                            }
+                            // Only normal actions that may be skipped leave the queue. A hidden (idle mode) action,
+                            // a parent idle or exit continuation, or a "must run" action stays, and looping on its
+                            // index never ended (a visitor with a queued "leave" got another one from the portal).
+                            var skipped = this.Queue.Skip(i + 2)
+                                .Where(x => x.Mode == VMQueueMode.Normal && !x.Flags.HasFlag(TTABFlags.MustRun))
+                                .Select(x => x.UID).ToList();
+                            foreach (var uid in skipped) CancelAction(uid);
                         }
                         EvaluateQueuePriorities();
                         return;
