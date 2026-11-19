@@ -109,10 +109,14 @@ namespace FSO.SimAntics.Primitives
                     {
                         foreach (VMAvatar person in context.VM.Context.ObjectQueries.Avatars)
                         {
-                            if (person.GetPersonData(VMPersonDataVariable.TS1FamilyNumber) == crossData.ActiveFamily.ChunkID && person != context.Caller)
+                            // A family member at work or school stays behind. (The others may already be out of the
+                            // world, boarding the shuttle, so position does not tell.)
+                            if (person.GetPersonData(VMPersonDataVariable.TS1FamilyNumber) == crossData.ActiveFamily.ChunkID && person != context.Caller
+                                && person.GetPersonData(VMPersonDataVariable.TS1AtWorkSchool) == 0)
                                 people.Add(person);
                         }
                     }
+                    crossData.Travellers = people.Select(person => person.Object.OBJ.GUID).ToArray();
 
                     int pi = 0;
                     foreach (var person in people)
@@ -148,6 +152,8 @@ namespace FSO.SimAntics.Primitives
                     //spawn downtown sim out of world
 
                     var crossDataDT = Content.Content.Get().Neighborhood.GameState;
+                    // A community lot opened without a trip has no traveller. The marker waits instead of throwing.
+                    if (crossDataDT.ActiveFamily == null || crossDataDT.DowntownSimGUID == 0) return VMPrimitiveExitCode.CONTINUE_NEXT_TICK;
 
                     var control = context.VM.Context.CreateObjectInstance(crossDataDT.DowntownSimGUID, LotTilePos.OUT_OF_WORLD, Direction.NORTH)?.BaseObject;
                     ((VMAvatar)control).AvatarState.Permissions = Model.TSOPlatform.VMTSOAvatarPermissions.Owner;
@@ -230,9 +236,14 @@ namespace FSO.SimAntics.Primitives
                 case VMGenericTS1CallMode.BuildVacationFamilyPutFamilyNumInTemp0: //26
                     //in our implementation, vacation lots build the family in the same way as normal lots.
                     var crossData2 = Content.Content.Get().Neighborhood.GameState;
+                    // A vacation or Magic Town lot opened without a trip has no travelling family. Wait instead of throwing.
+                    if (crossData2.ActiveFamily == null) return VMPrimitiveExitCode.CONTINUE_NEXT_TICK;
                     if (crossData2.LotTransitInfo >= 1)
                     {
-                        crossData2.ActiveFamily.SelectWholeFamily();
+                        // Only the members who left together arrive; the others are still at work or school.
+                        var travellers = crossData2.Travellers.Where(guid => crossData2.ActiveFamily.FamilyGUIDs.Contains(guid)).ToArray();
+                        if (travellers.Length > 0) crossData2.ActiveFamily.RuntimeSubset = travellers;
+                        else crossData2.ActiveFamily.SelectWholeFamily();
                         context.VM.TS1State.ActivateFamily(context.VM, crossData2.ActiveFamily);
                         context.Thread.TempRegisters[0] = context.VM.GetGlobalValue(9);
 

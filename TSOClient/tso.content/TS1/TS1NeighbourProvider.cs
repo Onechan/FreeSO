@@ -418,5 +418,10 @@ namespace FSO.Content.TS1
         public FAMI ActiveFamily;
         public uint DowntownSimGUID;
         public short LotTransitInfo;
+        /// <summary>
+        /// The Sims who left the lot together. Family members at work or school are off the lot and stay behind.
+        /// Empty means the whole family. Not saved.
+        /// </summary>
+        public uint[] Travellers = new uint[0];
     }
 }
