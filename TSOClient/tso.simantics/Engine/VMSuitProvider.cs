@@ -142,20 +142,27 @@ namespace FSO.SimAntics.Engine
                 case VMPersonSuits.TS1Luau:
                 case VMPersonSuits.TS1Rave:
                 case VMPersonSuits.TS1Costume: //person strings 27. hands: 28, 29
+                // Sims made before an expansion lack its body strings (30-34). They keep their daywear instead of
+                // failing: a winter vacation dresses every family member and threw on the first without winter clothes.
                 case VMPersonSuits.TS1ExpandedFormal: //person strings 30 (f###)
+                    if (!IsValid(bodyStrings.GetString(30))) return new VMOutfitReference(bodyStrings, false);
                     toHandCopy = new VMOutfitReference(bodyStrings.GetString(30), false);
                     break;
                 case VMPersonSuits.TS1ExpandedSwimsuit: //person strings 31 (s###)
+                    if (!IsValid(bodyStrings.GetString(31))) return new VMOutfitReference(bodyStrings, false);
                     toHandCopy = new VMOutfitReference(bodyStrings.GetString(31), false);
                     break;
                 case VMPersonSuits.TS1ExpandedPajamas: //person strings 32 (l###)
+                    if (!IsValid(bodyStrings.GetString(32))) return new VMOutfitReference(bodyStrings, false);
                     toHandCopy = new VMOutfitReference(bodyStrings.GetString(32), false);
                     break;
                 case VMPersonSuits.TS1Disco: //???
                 case VMPersonSuits.TS1Winter: //person strings 33 (w###)
+                    if (!IsValid(bodyStrings.GetString(33))) return new VMOutfitReference(bodyStrings, false);
                     toHandCopy = new VMOutfitReference(bodyStrings.GetString(33), false);
                     break;
                 case VMPersonSuits.TS1HighFashion: //person strings 34 (h###)
+                    if (!IsValid(bodyStrings.GetString(34))) return new VMOutfitReference(bodyStrings, false);
                     toHandCopy = new VMOutfitReference(bodyStrings.GetString(34), false);
                     break;
             }
