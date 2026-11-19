@@ -140,7 +140,10 @@ namespace FSO.SimAntics.Primitives
                 // selected Sim (global 3), which can be 0 or a stale id; without a Sim there is no family to walk.
                 if (operand.SearchType == VMSetToNextSearchType.FamilyMember && Pointer is not VMAvatar) return VMPrimitiveExitCode.GOTO_FALSE;
 
-                bool loop = (operand.SearchType == VMSetToNextSearchType.ObjectOnSameTile) || (operand.SearchType == VMSetToNextSearchType.FamilyMember);
+                // Same-tile searches wrap around until they come back to the object they started from. If that object
+                // is missing from the tile's list (a Sim just placed back on the lot), wrapping never ends: search once.
+                bool loop = (operand.SearchType == VMSetToNextSearchType.ObjectOnSameTile && Pointer != null && entities.Contains(Pointer))
+                    || (operand.SearchType == VMSetToNextSearchType.FamilyMember);
 
                 var ind = entities.FindNextIndexInObjList(targetValue);
                 for (int i=ind; i<entities.Count; i++) //generic search through all objects
