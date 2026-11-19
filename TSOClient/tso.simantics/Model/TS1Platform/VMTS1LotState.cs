@@ -20,6 +20,9 @@ namespace FSO.SimAntics.Model.TS1Platform
         {
             if (family == null) return;
             vm.SetGlobalValue(9, (short)family.ChunkID);
+            // A community lot loads without a family, which sets "simless build mode" (global 32). A traveller arriving
+            // ends it. Restaurant podiums wait while it is set and never hired a maitre d', waitress, chef or busboy.
+            vm.SetGlobalValue(32, 0);
             CurrentFamily = family;
         }
 
