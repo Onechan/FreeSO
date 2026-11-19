@@ -107,6 +107,9 @@ namespace FSO.SimAntics.Primitives
                 {
                     case VMSetToNextSearchType.ObjectOnSameTile:
                         if (Pointer == null) return VMPrimitiveExitCode.GOTO_FALSE; // verified in ts1
+                        // An object out of the world (a Sim at work) has no tile. The objects stored out of the world are
+                        // not "on the same tile", and the search never came back to the Sim ("move away from door" looped).
+                        if (Pointer.Position == LotTilePos.OUT_OF_WORLD) return VMPrimitiveExitCode.GOTO_FALSE;
                         entities = context.VM.Context.ObjectQueries.GetObjectsAt(Pointer.Position); break;
                     case VMSetToNextSearchType.Person:
                     case VMSetToNextSearchType.FamilyMember:
