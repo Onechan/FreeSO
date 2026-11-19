@@ -23,6 +23,13 @@ namespace FSO.SimAntics.Utils
         //   - change OBJD name to "user_#### - name". maybe change ctss id?
         //   - save sim to userdata
 
+        /// <summary>
+        /// Called for each character the game makes while playing (an adopted pet, a baby, a new townie), with what is
+        /// needed to make it again from the same template. A client that keeps saves elsewhere can store that instead
+        /// of the generated character file.
+        /// </summary>
+        public static Action<uint, SimTemplateCreateInfo> OnCharacterCreated;
+
         public static void PrepareTemplatePerson(uint guid, SimTemplateCreateInfo info)
         {
             var neigh = Content.Content.Get().Neighborhood;
@@ -63,6 +70,7 @@ namespace FSO.SimAntics.Utils
             neigh.SaveNewNeighbour(tempObj);
             bodyStrings.SetString(1, "");
             bodyStrings.SetString(2, "");
+            OnCharacterCreated?.Invoke(guid, info);
         }
 
         public static FAMI CreateFamily(string name, int count, SimTemplateCreateInfo[] infos)
@@ -181,6 +189,9 @@ namespace FSO.SimAntics.Utils
     }
 
     public class SimTemplateCreateInfo {
+        /// <summary>For making a character again from a stored description.</summary>
+        public SimTemplateCreateInfo() { BodyStringReplace = new Dictionary<int, string>(); }
+
         public string Name;
         public string Bio;
         public short Gender;
