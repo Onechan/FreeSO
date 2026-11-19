@@ -910,7 +910,12 @@ namespace FSO.SimAntics.Engine
                 }
                 else if (avatar.IsPet) return null; //not allowed
 
-                var isVisitor = avatar.GetPersonData(VMPersonDataVariable.PersonType) == 1 && avatar.GetPersonData(VMPersonDataVariable.GreetStatus) < 2;
+                // On a community lot the player's travelling Sims have the visitor person type, but the player controls
+                // them: the visitor limits are for guests and townies. Magic Town's "Go Home" through the hole a Sim came
+                // out of checks for that person type and does not allow visitors.
+                var activeFamily = Context.VM.TS1State?.CurrentFamily;
+                var travelling = activeFamily != null && avatar.GetPersonData(VMPersonDataVariable.TS1FamilyNumber) == activeFamily.ChunkID;
+                var isVisitor = !travelling && avatar.GetPersonData(VMPersonDataVariable.PersonType) == 1 && avatar.GetPersonData(VMPersonDataVariable.GreetStatus) < 2;
                 //avatar.ObjectID != Context.VM.GetGlobalValue(3);
                 var debugTrees = false;
 
