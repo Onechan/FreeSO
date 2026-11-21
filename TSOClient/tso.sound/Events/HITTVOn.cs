@@ -17,6 +17,19 @@ namespace FSO.HIT.Events
     /// </summary>
     public class HITTVOn : HITSound
     {
+        /// <summary>
+        /// A host that lists a station's music files itself, for when they are not on the engine's file system (the web
+        /// client keeps them in browser storage). Given the station folder ("Music/Stations/Rock/"), it returns the
+        /// files' paths, or null to search the folder.
+        /// </summary>
+        public static Func<string, string[]> MusicFiles;
+
+        /// <summary>
+        /// A host that plays a music file itself, or null to decode it here with MP3Player. MP3Player decodes on a
+        /// background task, which a browser without threads never runs: the music stopped after its first buffers.
+        /// </summary>
+        public static Func<string, ISFXInstanceLike> MusicHost;
+
         private string Station;
         private Dictionary<string, SoundEffect> SFXCache = new Dictionary<string, SoundEffect>();
         private List<string> Sounds = new List<string>();
@@ -68,7 +81,7 @@ namespace FSO.HIT.Events
 
             VolumeSet = false;
 
-            if (Instance == null || (IsMusic && MusicInstance.IsEnded()) || Instance.State == SoundState.Stopped)
+            if (Instance == null || (IsMusic && MusicInstance != null && MusicInstance.IsEnded()) || Instance.State == SoundState.Stopped)
             {
                 if (PlayNext()) return true;
                 else {
@@ -131,7 +144,7 @@ namespace FSO.HIT.Events
             string[] files;
             if (!isRegex) {
                 statBase = (content.TS1) ? Path.Combine(content.TS1BasePath, path) : content.GetPath(path);
-                files = Directory.GetFiles(statBase, "*.xa", SearchOption.AllDirectories);
+                files = Directory.Exists(statBase) ? Directory.GetFiles(statBase, "*.xa", SearchOption.AllDirectories) : new string[0];
             } else
             {
                 statBase = (content.TS1) ? content.TS1BasePath : content.BasePath;
@@ -162,7 +175,8 @@ namespace FSO.HIT.Events
                     var regex = new Regex(path);
                     files = content.AllFiles.Where(x => regex.IsMatch(x.Replace('\\', '/'))).Select(x => content.GetPath(x)).ToArray();
                 } else {
-                    files = Directory.GetFiles(statBase, "*.mp3", SearchOption.AllDirectories);
+                    files = MusicFiles?.Invoke(path)
+                        ?? (Directory.Exists(statBase) ? Directory.GetFiles(statBase, "*.mp3", SearchOption.AllDirectories) : new string[0]);
                 }
                 IsMusic = true;
             }
@@ -176,7 +190,7 @@ namespace FSO.HIT.Events
         private void KillLast()
         {
             if (Instance == null) return;
-            if (IsMusic)
+            if (IsMusic && MusicInstance != null)
             {
                 MusicInstance.Stop();
                 MusicInstance.Dispose();
@@ -199,8 +213,17 @@ namespace FSO.HIT.Events
 
             if (IsMusic)
             {
-                MusicInstance = new MP3Player(sound);
-                Instance = MusicInstance;
+                var hosted = MusicHost?.Invoke(sound);
+                if (hosted != null)
+                {
+                    MusicInstance = null;
+                    Instance = hosted;
+                }
+                else
+                {
+                    MusicInstance = new MP3Player(sound);
+                    Instance = MusicInstance;
+                }
             }
             else
             {
