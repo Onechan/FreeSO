@@ -47,6 +47,9 @@ namespace FSO.Common.Utils
 
         private static RenderTarget2D ActiveColor;
         private static RenderTarget2D ActiveDepth;
+        /// <summary>The colour and depth targets set by SetPPXTarget, for drawing that has to switch between them itself.</summary>
+        public static RenderTarget2D ActiveColorTarget => ActiveColor;
+        public static RenderTarget2D ActiveDepthTarget => ActiveDepth;
         private static int StencilValue;
 
         public static void SetPPXTarget(RenderTarget2D color, RenderTarget2D depth, bool clear)

@@ -17,6 +17,8 @@ namespace FSO.LotView.Components
         public bool IsPet;
         public short Gender;
         public float Scale = 1;
+        /// <summary>Set while Sims are drawn a second time into the depth target, where their headlines are not wanted.</summary>
+        public static bool SkipHeadlines;
         public int ALevel = 0;
         public _2DStandaloneSprite HeadlineSprite;
 
@@ -248,7 +250,7 @@ namespace FSO.LotView.Components
                 //world._3D.DrawMesh(newWorld, Avatar, (short)ObjectID, (Room>65530 || Room == 0)?Room:blueprint.Rooms[Room].Base, col, ALevel); 
             }
 
-            if (Headline != null && !Headline.IsDisposed)
+            if (Headline != null && !Headline.IsDisposed && !SkipHeadlines)
             {
                 var lastCull = device.RasterizerState;
                 var lastBlend = device.BlendState;

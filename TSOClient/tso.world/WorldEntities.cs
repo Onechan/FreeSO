@@ -1,4 +1,6 @@
 ﻿using FSO.LotView.Components;
+using FSO.Common;
+using FSO.Common.Utils;
 using FSO.LotView.Effects;
 using FSO.LotView.Model;
 using FSO.LotView.Utils;
@@ -87,9 +89,33 @@ namespace FSO.LotView
             _2d.OffsetTile(new Vector3());
             _2d.PrepareImmediate(Effects.WorldBatchTechniques.drawZSpriteDepthChannel);
 
-            foreach (var avatar in Blueprint.Avatars)
+            var color = PPXDepthEngine.ActiveColorTarget;
+            var depth = PPXDepthEngine.ActiveDepthTarget;
+            if (FSOEnvironment.UseMRT || FSOEnvironment.SoftwareDepth || depth == null)
             {
-                if (avatar.Level <= state.Level) avatar.Draw(gd, state);
+                foreach (var avatar in Blueprint.Avatars)
+                {
+                    if (avatar.Level <= state.Level) avatar.Draw(gd, state);
+                }
+            }
+            else
+            {
+                // Without multiple render targets the 2D batch draws colour and depth one after the other and leaves the
+                // depth target bound, so the Sims would land in the depth map only. Draw them into the colour target, then
+                // as depth into the depth target, binding the target again before each Sim (headlines switch targets).
+                foreach (var depthPass in new[] { false, true })
+                {
+                    effect.Parameters["depthOutMode"]?.SetValue(depthPass);
+                    AvatarComponent.SkipHeadlines = depthPass;
+                    foreach (var avatar in Blueprint.Avatars)
+                    {
+                        if (avatar.Level > state.Level) continue;
+                        gd.SetRenderTarget(depthPass ? depth : color);
+                        avatar.Draw(gd, state);
+                    }
+                }
+                effect.Parameters["depthOutMode"]?.SetValue(false);
+                AvatarComponent.SkipHeadlines = false;
             }
 
             gd.RasterizerState = RasterizerState.CullNone;
