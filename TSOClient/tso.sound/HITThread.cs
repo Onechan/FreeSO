@@ -159,6 +159,7 @@ namespace FSO.HIT
                     {
                         while (true)
                         {
+                            HITVM.TraceLog?.Invoke(this, (int)PC, Src.Data[PC]);
                             var opcode = Src.Data[PC++];
                             if (opcode >= HITInterpreter.Instructions.Length) opcode = 0;
                             var result = HITInterpreter.Instructions[opcode](this);
@@ -170,8 +171,10 @@ namespace FSO.HIT
                             }
                         }
                     }
-                    catch (Exception)
+                    catch (Exception error)
                     {
+                        HITVM.TraceLog?.Invoke(this, (int)PC, -1);
+                        System.Diagnostics.Debug.WriteLine(error);
                         return false;
                     }
                 }
@@ -307,6 +310,7 @@ namespace FSO.HIT
         public int NoteOn()
         {
             var sound = audContent.GetSFX(Patch);
+            HITVM.NoteLog?.Invoke(Name, Patch?.Name ?? Patch?.Filename, sound != null);
 
             if (sound != null)
             {
@@ -348,6 +352,7 @@ namespace FSO.HIT
         public int NoteLoop() //todo, make loop again.
         {
             var sound = audContent.GetSFX(Patch);
+            HITVM.NoteLog?.Invoke(Name, Patch?.Name ?? Patch?.Filename, sound != null);
 
             if (sound != null)
             {

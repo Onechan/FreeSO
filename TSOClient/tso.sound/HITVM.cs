@@ -161,7 +161,24 @@ namespace FSO.HIT
             return player;
         }
 
+        /// <summary>
+        /// Diagnostics for hosts: each sound event asked for (lower case) and the sound it started, or null when the
+        /// event is unknown, its track is missing or sound is off.
+        /// </summary>
+        public static Action<string, HITSound> EventLog;
+        /// <summary>Diagnostics for hosts: each note a sound thread plays (its event, the patch, whether its sample loaded).</summary>
+        public static Action<string, string, bool> NoteLog;
+        /// <summary>Diagnostics for hosts: each instruction a sound thread runs (its program counter and opcode, -1 when it failed).</summary>
+        public static Action<HITThread, int, int> TraceLog;
+
         public HITSound PlaySoundEvent(string evt)
+        {
+            var sound = StartSoundEvent(evt);
+            EventLog?.Invoke(evt?.ToLowerInvariant(), sound);
+            return sound;
+        }
+
+        private HITSound StartSoundEvent(string evt)
         {
             if (DISABLE_SOUND) return null;
             evt = evt.ToLowerInvariant();

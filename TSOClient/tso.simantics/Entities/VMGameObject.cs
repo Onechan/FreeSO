@@ -51,6 +51,17 @@ namespace FSO.SimAntics
                         ((ObjectComponent)WorldUI).HideForCutaway = (flags & VMEntityFlags.HideForCutaway) > 0;
                 //            || ((VMEntityFlags2)GetValue(VMStackObjectVariable.FlagField2) & VMEntityFlags2.ArchitectualDoor) > 0;
                     break;
+                case VMStackObjectVariable.Graphic:
+                    // TS1 draws an object with the graphic this field names whenever its part of the lot is drawn
+                    // again, so a graphic set without the Refresh primitive shows too: the fire alarm stops ringing
+                    // that way. Without this the alarm kept its sound waves after the fire was out.
+                    if (Thread?.Context?.VM?.TS1 == true && ObjectData[(int)var] != value)
+                    {
+                        base.SetValue(var, value);
+                        RefreshGraphic();
+                        return true;
+                    }
+                    break;
                 case VMStackObjectVariable.FlagField2:
                     /*
                     var flags2 = (VMEntityFlags2)value;

@@ -192,9 +192,19 @@ namespace FSO.HIT
         /// </summary>
         public static HITResult Jump(HITThread thread)
         {
+            var start = thread.PC;
             var read = thread.ReadByte();
+            // TS1 jumps to shared routines by their id in the .hot file's TrackData (0x100 and up). An id whose low
+            // byte is 15 or less (0x103, the routine the conversation voices jump to) looked like a register, so the
+            // voices jumped to address 0 and ended before their first note.
+            var literal = false;
+            if (read <= 15 && Content.Content.Get().TS1 && start + 4 <= thread.Src.Data.Length)
+            {
+                var id = BitConverter.ToUInt32(thread.Src.Data, (int)start);
+                literal = thread.ResGroup?.hot?.TrackData?.ContainsKey(id) == true;
+            }
 
-            if (read > 15) //literal
+            if (read > 15 || literal) //literal
             {
                 thread.PC--; //backtraaackkk
                 thread.PC = PCTrans(thread.ReadUInt32(), thread);
