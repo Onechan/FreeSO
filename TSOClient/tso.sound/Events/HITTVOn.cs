@@ -179,6 +179,8 @@ namespace FSO.HIT.Events
                         ?? (Directory.Exists(statBase) ? Directory.GetFiles(statBase, "*.mp3", SearchOption.AllDirectories) : new string[0]);
                 }
                 IsMusic = true;
+                // The stereo follows the music volume, as the game's sound options describe it (the TV stays with F/X).
+                VolGroup = Model.HITVolumeGroup.MUSIC;
             }
 
             foreach (var file in files)
