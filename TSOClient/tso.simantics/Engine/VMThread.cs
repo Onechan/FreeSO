@@ -239,7 +239,12 @@ namespace FSO.SimAntics.Engine
             while (Queue.Count > ActiveQueueBlock+1)
             {
                 var item = Queue[ActiveQueueBlock+1];
-                if (item.Priority <= priorityCompare) return false;
+                // TS1: a push at maximum priority starts from the main loop even when a script left the Sim's own
+                // priority at the maximum. The paper girl's drop function raises hers to 100 and one way out of it does
+                // not lower it again; the portal's "Leave world" (pushed at 100) then never started, and she walked
+                // around the lot for the rest of the day while the queue filled with more of them.
+                var maximumFromMain = Context.VM.TS1 && ActiveQueueBlock == -1 && item.Priority >= (short)VMQueuePriority.Maximum;
+                if (item.Priority <= priorityCompare && !maximumFromMain) return false;
                 if (item.NotifyIdle) Entity.SetFlag(VMEntityFlags.InteractionCanceled, item.NotifyIdle);
                 if (IsCheck || ((item.Mode != VMQueueMode.ParentIdle || !Entity.GetFlag(VMEntityFlags.InteractionCanceled)) && CheckAction(item) != null))
                 {
