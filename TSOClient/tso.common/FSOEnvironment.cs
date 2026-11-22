@@ -48,6 +48,11 @@ namespace FSO.Common
         public static bool TexCompress = true;
         public static bool TexCompressSupport = true;
         public static bool MSAASupport = true;
+        /// <summary>
+        /// The graphics backend has no MIN/MAX blend equations (KNI's WebGL backend throws for them). The light map's
+        /// shadow masks then add up instead, which saturates the same way for whole shadows.
+        /// </summary>
+        public static bool NoMinMaxBlend = false;
 
         public static string Args = "";
     }

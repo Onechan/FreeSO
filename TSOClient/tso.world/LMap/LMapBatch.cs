@@ -730,11 +730,15 @@ namespace FSO.LotView.LMap
             return mat;
         }
 
+        /// <summary>Max blending for the shadow masks, or a saturating add where the backend has no MAX equation.</summary>
+        internal static BlendFunction MaxFunction => FSOEnvironment.NoMinMaxBlend ? BlendFunction.Add : BlendFunction.Max;
+
         public BlendState MaxBlend = new BlendState()
         {
-            AlphaBlendFunction = BlendFunction.Max,
-            ColorBlendFunction = BlendFunction.Max,
+            AlphaBlendFunction = MaxFunction,
+            ColorBlendFunction = MaxFunction,
             ColorDestinationBlend = Blend.One,
+            AlphaDestinationBlend = Blend.One,
         };
 
         public BlendState MinBlend = new BlendState()
@@ -754,17 +758,19 @@ namespace FSO.LotView.LMap
 
         public BlendState MaxBlendRed = new BlendState()
         {
-            AlphaBlendFunction = BlendFunction.Max,
-            ColorBlendFunction = BlendFunction.Max,
+            AlphaBlendFunction = MaxFunction,
+            ColorBlendFunction = MaxFunction,
             ColorDestinationBlend = Blend.One,
+            AlphaDestinationBlend = Blend.One,
             ColorWriteChannels = ColorWriteChannels.Red | ColorWriteChannels.Alpha
         };
 
         public BlendState MaxBlendGreen = new BlendState()
         {
-            AlphaBlendFunction = BlendFunction.Max,
-            ColorBlendFunction = BlendFunction.Max,
+            AlphaBlendFunction = MaxFunction,
+            ColorBlendFunction = MaxFunction,
             ColorDestinationBlend = Blend.One,
+            AlphaDestinationBlend = Blend.One,
             ColorWriteChannels = ColorWriteChannels.Green | ColorWriteChannels.Alpha
         };
 

@@ -366,17 +366,19 @@ namespace FSO.LotView.RC
 
         public BlendState MaxBlendRed = new BlendState()
         {
-            AlphaBlendFunction = BlendFunction.Max,
-            ColorBlendFunction = BlendFunction.Max,
+            AlphaBlendFunction = LMap.LMapBatch.MaxFunction,
+            ColorBlendFunction = LMap.LMapBatch.MaxFunction,
             ColorDestinationBlend = Blend.One,
+            AlphaDestinationBlend = Blend.One,
             ColorWriteChannels = ColorWriteChannels.Red | ColorWriteChannels.Alpha
         };
 
         public BlendState MaxBlendGreen = new BlendState()
         {
-            AlphaBlendFunction = BlendFunction.Max,
-            ColorBlendFunction = BlendFunction.Max,
+            AlphaBlendFunction = LMap.LMapBatch.MaxFunction,
+            ColorBlendFunction = LMap.LMapBatch.MaxFunction,
             ColorDestinationBlend = Blend.One,
+            AlphaDestinationBlend = Blend.One,
             ColorWriteChannels = ColorWriteChannels.Green | ColorWriteChannels.Alpha
         };
 
