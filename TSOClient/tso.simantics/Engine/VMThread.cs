@@ -861,7 +861,7 @@ namespace FSO.SimAntics.Engine
                             // a parent idle or exit continuation, or a "must run" action stays, and looping on its
                             // index never ended (a visitor with a queued "leave" got another one from the portal).
                             var skipped = this.Queue.Skip(i + 2)
-                                .Where(x => x.Mode == VMQueueMode.Normal && !x.Flags.HasFlag(TTABFlags.MustRun))
+                                .Where(x => x.Mode == VMQueueMode.Normal && !MustRun(x))
                                 .Select(x => x.UID).ToList();
                             foreach (var uid in skipped) CancelAction(uid);
                         }
@@ -874,6 +874,13 @@ namespace FSO.SimAntics.Engine
             }
             EvaluateQueuePriorities();
         }
+
+        /// <summary>
+        /// TSO's "must run" interactions cannot be cancelled before they start. TS1 has no such flag: its bit 10 says
+        /// dogs may use the interaction (bit 9 cats), so read as "must run" it kept a queued walk ("Go Here", which
+        /// pets may use too) in the queue when the player cancelled it.
+        /// </summary>
+        private bool MustRun(VMQueuedAction action) => !Context.VM.TS1 && action.Flags.HasFlag(TTABFlags.MustRun);
 
         public void CancelAction(ushort actionUID)
         {
@@ -908,7 +915,7 @@ namespace FSO.SimAntics.Engine
                     }
                 }
 
-                var canQueueSkip = !interaction.Flags.HasFlag(TTABFlags.MustRun);
+                var canQueueSkip = !MustRun(interaction);
 
                 if (canQueueSkip && (index > ActiveQueueBlock || Stack.LastOrDefault()?.ActionTree == false) && (interaction.Mode == Engine.VMQueueMode.Normal || interaction.Flags.HasFlag(TTABFlags.FSODirectControl)))
                 {
